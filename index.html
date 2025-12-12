@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DCA103</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Poppins, Arial;
+  background: linear-gradient(135deg, #4e54c8, #8f94fb);
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 95%;
+  max-width: 600px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.2);
+  color: white;
+}
+
+/* LEFT INPUTS */
+input {
+  width: 90%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  margin: 5px 0 15px 0;
+  font-size: 16px;
+  display: block;
+}
+
+label {
+  display: block;
+  font-size: 17px;
+  margin-top: 10px;
+}
+
+button {
+  padding: 14px;
+  width: 100%;
+  border: none;
+  font-size: 18px;
+  border-radius: 10px;
+  background: #00c9a7;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #02a78e;
+}
+
+#timer {
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #ffff88;
+}
+
+#questionBox {
+  font-size: 20px;
+  font-weight: bold;
+  min-height: 70px;
+}
+
+.option {
+  padding: 13px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 12px;
+  margin: 10px 0;
+  cursor: pointer;
+  font-size: 18px;
+  border: 2px solid transparent;
+}
+
+.option.correct {
+  background: rgba(0,255,0,0.35);
+  border-color: #00ff00;
+}
+.option.wrong {
+  background: rgba(255,0,0,0.35);
+  border-color: #ff0000;
+}
+
+.tick {
+  float: right;
+  font-size: 22px;
+}
+
+#submitBtn {
+  display: none;
+  margin-top: 20px;
+  background: #ffa900;
+}
+
+/* PROGRESS BAR */
+#progressBar {
+  width: 100%;
+  height: 12px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 6px;
+  margin-top: 20px;
+  display: none;
+}
+#progressFill {
+  width: 0%;
+  height: 12px;
+  background: yellow;
+  transition: 0.4s;
+}
+
+/* POPUP */
+#resultPopup {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+#popupBox {
+  background: white;
+  color: black;
+  padding: 25px;
+  text-align: center;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 350px;
+}
+#popupBox button {
+  margin-top: 15px;
+  background: #4e54c8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2 style="text-align:center;margin-top:0;">MPCI Assessment — DCA-103</h2>
+
+  <label>Name:</label>
+  <input id="name" type="text">
+
+  <label>Address:</label>
+  <input id="address" type="text">
+
+  <label>Phone:</label>
+  <input id="phone" type="text" maxlength="10" placeholder="Enter 10-digit number">
+
+  <button onclick="startQuiz()">Start Quiz</button>
+
+  <div id="progressBar"><div id="progressFill"></div></div>
+
+  <div id="quizArea" style="display:none;margin-top:20px;">
+    <div id="timer">10:00</div>
+    <div id="questionBox"></div>
+    <div id="optionsBox"></div>
+    <button id="submitBtn" onclick="finalSubmit()">Final Submit</button>
+  </div>
+</div>
+
+<!-- RESULT POPUP -->
+<div id="resultPopup">
+  <div id="popupBox">
+    <h3>Your Result</h3>
+    <p id="popupText"></p>
+    <button onclick="closePopup()">OK</button>
+  </div>
+</div>
+
+<script>
+let questions = [
+{q:"MS Word default file extension?", a:"*.docx", o:["*.doc","*.txt","*.pdf"]},
+{q:"Shortcut for Bold?", a:"Ctrl + B", o:["Ctrl + U","Ctrl + I","Ctrl + M"]},
+{q:"To insert a picture:", a:"Insert → Pictures", o:["Home → Styles","View → Zoom","Design → Themes"]},
+{q:"Spell Check shortcut:", a:"F7", o:["F1","Ctrl + S","Shift + F7"]},
+{q:"Which is NOT alignment?", a:"Diagonal", o:["Left","Right","Justify"]},
+{q:"Header appears at:", a:"Top of page", o:["Bottom","Center","Side"]},
+{q:"Shortcut for Underline?", a:"Ctrl + U", o:["Ctrl + O","Ctrl + C","Ctrl + N"]},
+{q:"To copy formatting:", a:"Format Painter", o:["Review","Thesaurus","Track Changes"]},
+{q:"To change margins:", a:"Layout → Margins", o:["Home → Font","Review → Comments","Insert → Table"]},
+{q:"Which inserts a table?", a:"Insert → Table", o:["Home → Clipboard","View → Split","Design → Colors"]},
+{q:"Excel default extension?", a:"*.xlsx", o:["*.xlsm","*.docx","*.pptx"]},
+{q:"Formula starts with:", a:"=", o:["+","%","("]},
+{q:"Shortcut for AutoSum:", a:"Alt + =", o:["Ctrl + A","Ctrl + +","Shift + A"]},
+{q:"Rows labeled as:", a:"Numbers", o:["Letters","Words","Symbols"]},
+{q:"Columns labeled as:", a:"Letters", o:["Numbers","Roman","Greek"]},
+{q:"Function to get average:", a:"AVERAGE()", o:["SUM()","ADD()","COUNT()"]},
+{q:"Excel is mainly used for:", a:"Calculations", o:["Drawing","Typing","Programming"]},
+{q:"To create a chart:", a:"Insert → Chart", o:["Home → Sort","Data → Filter","Review → Share"]},
+{q:"To freeze headers:", a:"View → Freeze Panes", o:["Home → Styles","Insert → Image","Data → Table"]},
+{q:"Cell reference A1 is:", a:"Relative", o:["Absolute","Mixed","Static"]},
+{q:"PowerPoint default extension?", a:"*.pptx", o:["*.ppt","*.ppx","*.pdf"]},
+{q:"Shortcut for new slide:", a:"Ctrl + M", o:["Ctrl + N","Ctrl + S","Ctrl + L"]},
+{q:"To start slideshow:", a:"F5", o:["F2","Shift + F5","Ctrl + F5"]},
+{q:"To insert a shape:", a:"Insert → Shapes", o:["Design → Layout","View → Slide Sorter","Review → Comments"]},
+{q:"To change theme:", a:"Design → Themes", o:["View → Zoom","Home → Paragraph","Insert → Icon"]},
+{q:"Which is NOT a view?", a:"Edit View", o:["Slide Sorter","Reading View","Normal"]},
+{q:"Slide layout changes:", a:"Content arrangement", o:["Font only","Color only","No effect"]},
+{q:"Transition is applied to:", a:"Slides", o:["Paragraphs","Tables","Headers"]},
+{q:"Animation is applied to:", a:"Objects", o:["Entire file","Themes","Margins"]},
+{q:"To print slides:", a:"File → Print", o:["Insert → Print","Review → Export","View → Printer"]},
+{q:"Photoshop default file format?", a:".psd", o:[".ppt",".docx",".jpg"]},
+{q:"Shortcut for Brush Tool:", a:"B", o:["P","T","C"]},
+{q:"To remove background:", a:"Magic Eraser / Quick Selection", o:["Crop Tool","Zoom Tool","Text Tool"]},
+{q:"Shortcut for Zoom:", a:"Z", o:["X","O","M"]},
+{q:"Layers panel shortcut:", a:"F7", o:["F6","F4","F9"]},
+{q:"To merge layers:", a:"Ctrl + E", o:["Ctrl + M","Ctrl + L","Ctrl + R"]},
+{q:"To copy layer:", a:"Ctrl + J", o:["Ctrl + U","Ctrl + P","Ctrl + O"]},
+{q:"To save for web:", a:"File → Export → Save for Web", o:["File → Open","Edit → Define Brush","View → Adjust"]},
+{q:"To crop:", a:"C", o:["B","T","R"]},
+{q:"Opacity controls:", a:"Transparency", o:["Sharpness","Rotation","Speed"]}
+];
+
+let index = 0, score = 0, timer;
+let userName, userAddress, userPhone;
+
+function startTimer() {
+  let time = 600;
+  timer = setInterval(() => {
+    let m = Math.floor(time / 60);
+    let s = time % 60;
+    document.getElementById("timer").innerHTML = `${m}:${s<10?"0"+s:s}`;
+    if (time === 0) finalSubmit();
+    time--;
+  }, 1000);
+}
+
+function startQuiz() {
+  userName = document.getElementById("name").value.trim();
+  userAddress = document.getElementById("address").value.trim();
+  userPhone = document.getElementById("phone").value.trim();
+
+  if (!userName || !userAddress || !userPhone) {
+    alert("Please fill all fields.");
+    return;
+  }
+
+  if (!/^\d{10}$/.test(userPhone)) {
+    alert("Phone must be 10 digits.");
+    return;
+  }
+
+  document.getElementById("progressBar").style.display = "block";
+  document.getElementById("quizArea").style.display = "block";
+
+  startTimer();
+  showQuestion();
+}
+
+function updateProgress() {
+  let percent = (index / questions.length) * 100;
+  document.getElementById("progressFill").style.width = percent + "%";
+}
+
+function showQuestion() {
+  updateProgress();
+
+  if (index >= questions.length) {
+    document.getElementById("submitBtn").style.display = "block";
+    document.getElementById("questionBox").innerHTML = "All questions completed!";
+    document.getElementById("optionsBox").innerHTML = "";
+    return;
+  }
+
+  let q = questions[index];
+  let options = [q.a, ...q.o].sort(() => Math.random() - 0.5);
+  let labels = ["a","b","c","d"];
+
+  questionBox.innerHTML = `${index+1}. ${q.q}`;
+
+  let html = "";
+  for (let i = 0; i < 4; i++) {
+    html += `<div class="option" onclick="selectOption('${options[i]}', this)">
+      ${labels[i]}) ${options[i]}
+    </div>`;
+  }
+  optionsBox.innerHTML = html;
+}
+
+function selectOption(selected, el) {
+  let q = questions[index];
+  let opts = document.querySelectorAll(".option");
+
+  opts.forEach(o => o.style.pointerEvents = "none");
+
+  if (selected === q.a) {
+    el.classList.add("correct");
+    el.innerHTML += `<span class="tick">✔️</span>`;
+    score++;
+  } else {
+    el.classList.add("wrong");
+    el.innerHTML += `<span class="tick">❌</span>`;
+  }
+
+  setTimeout(() => {
+    index++;
+    showQuestion();
+  }, 700);
+}
+
+function finalSubmit() {
+  clearInterval(timer);
+
+  let grade = "";
+  if (score <= 20) grade = "C";
+  else if (score <= 25) grade = "B";
+  else if (score <= 35) grade = "A";
+  else grade = "A+ Excellent";
+
+  popupText.innerHTML = `
+    <b>Name:</b> ${userName}<br>
+    <b>Address:</b> ${userAddress}<br>
+    <b>Phone:</b> ${userPhone}<br><br>
+    <b>Score:</b> ${score} / ${questions.length}<br>
+    <b>Grade:</b> ${grade}
+  `;
+  resultPopup.style.display = "flex";
+
+  const sheetURL = "https://script.google.com/macros/s/AKfycbzMlv_lTOnW7e9j3Bn2OxrKk6STO6MuDlci79zoFKyZlnEES7miSfzNKRrVgT51MMQhNA/exec";
+
+  fetch(sheetURL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: userName,
+      address: userAddress,
+      phone: userPhone,
+      score: score,
+      grade: grade
+    })
+  })
+  .then(res => res.json())
+  .then(data => console.log("Sheet Response:", data))
+  .catch(err => console.error("POST ERROR:", err));
+}
+</script>
+
+</body>
+</html>
